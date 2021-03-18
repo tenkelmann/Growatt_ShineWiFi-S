@@ -11,6 +11,15 @@
 #include "index.h"
 #include "credentials.h"
 
+#define PROJECT_NAME "ShineWiFi-S Modbus"
+
+#define DEBUG
+#ifdef DEBUG
+ #define DEBUG_PRINT(x)  Serial.println(x)
+#else
+ #define DEBUG_PRINT(x)
+#endif
+
 #define LED_GN 0  // GPIO0
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
@@ -107,16 +116,14 @@ void WiFi_Reconnect()
     while (WiFi.status() != WL_CONNECTED)
     {
       delay(200);
-      Serial.print("x");
+      DEBUG_PRINT("x");
       digitalWrite(LED_RT, !digitalRead(LED_RT)); // toggle red led on WiFi (re)connect
     }
 
-    Serial.println("");
-    WiFi.printDiag(Serial);
-    Serial.print("local IP:");
-    Serial.println(WiFi.localIP());
-    Serial.print("Hostname: ");
-    Serial.println(HOSTNAME);
+    DEBUG_PRINT("local IP:");
+    DEBUG_PRINT(WiFi.localIP());
+    DEBUG_PRINT("Hostname: ");
+    DEBUG_PRINT(HOSTNAME);
 
     MqttClient.setServer(MQTT_SERVER, MQTT_PORT);
     
