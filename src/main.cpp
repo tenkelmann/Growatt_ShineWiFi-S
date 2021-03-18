@@ -21,17 +21,9 @@
   #define MQTT_MAX_PACKET_SIZE 512
 #endif
 
-// Data of the Wifi access point
-const char* ssid        = WIFI_SSID;
-const char* password    = WIFI_PASS;
 #define HOSTNAME          "Growatt"
-//#define SIMULATE 1
 
 const char* update_path = "/firmware";
-const char* update_username = "<user_for_update>";
-const char* update_password = "<password_for_update>";
-
-const char* mqtt_server = "<mqtt_server_ip";
 
 WiFiClient   espClient;
 PubSubClient MqttClient(espClient);
@@ -47,48 +39,46 @@ long Timer10s = 0;
 
 void CreateJson(char *Buffer)
 {
-  
   Buffer[0] = 0; // Terminate first byte
   
-#ifndef SIMULATE
-  sprintf(Buffer, "{\r\n");
-  switch( Inverter.GetStatus() )
-  {
-    case GwStatusWaiting:
-      sprintf(Buffer, "%s  \"Status\": \"Waiting\",\r\n", Buffer);
-      break;
-    case GwStatusNormal: 
-      sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n", Buffer);
-      break;
-    case GwStatusFault:
-      sprintf(Buffer, "%s  \"Status\": \"Fault\",\r\n", Buffer);
-      break;
-  }
-  sprintf(Buffer, "%s  \"DcVoltage\": %.1f,\r\n",     Buffer, Inverter.GetDcVoltage());
-  sprintf(Buffer, "%s  \"AcFreq\": %.3f,\r\n",        Buffer, Inverter.GetAcFrequency());
-  sprintf(Buffer, "%s  \"AcVoltage\": %.1f,\r\n",     Buffer, Inverter.GetAcVoltage());
-  sprintf(Buffer, "%s  \"AcPower\": %.1f,\r\n",       Buffer, Inverter.GetAcPower());
-  sprintf(Buffer, "%s  \"EnergyToday\": %.1f,\r\n",   Buffer, Inverter.GetEnergyToday());
-  sprintf(Buffer, "%s  \"EnergyTotal\": %.1f,\r\n",   Buffer, Inverter.GetEnergyTotal());
-  sprintf(Buffer, "%s  \"OperatingTime\": %u,\r\n",   Buffer, Inverter.GetOperatingTime());
-  sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",    Buffer, Inverter.GetInverterTemperature());
-  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",              Buffer, u16PacketCnt);
-  sprintf(Buffer, "%s}\r\n", Buffer);
-#else
-  #warning simulating
-  sprintf(Buffer, "{\r\n");
-  sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",    Buffer);
-  sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"AcFreq\": 50.00,\r\n",         Buffer);
-  sprintf(Buffer, "%s  \"AcVoltage\": 230.0,\r\n",      Buffer);
-  sprintf(Buffer, "%s  \"AcPower\": 0.00,\r\n",         Buffer);
-  sprintf(Buffer, "%s  \"EnergyToday\": 0.3,\r\n",      Buffer);
-  sprintf(Buffer, "%s  \"EnergyTotal\": 49.1,\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n", Buffer);
-  sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                Buffer, u16PacketCnt);
-  sprintf(Buffer, "%s}", Buffer);
-      
+  #ifndef SIMULATE
+    sprintf(Buffer, "{\r\n");
+    switch( Inverter.GetStatus() )
+    {
+      case GwStatusWaiting:
+        sprintf(Buffer, "%s  \"Status\": \"Waiting\",\r\n", Buffer);
+        break;
+      case GwStatusNormal: 
+        sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n", Buffer);
+        break;
+      case GwStatusFault:
+        sprintf(Buffer, "%s  \"Status\": \"Fault\",\r\n", Buffer);
+        break;
+    }
+    sprintf(Buffer, "%s  \"DcVoltage\": %.1f,\r\n",     Buffer, Inverter.GetDcVoltage());
+    sprintf(Buffer, "%s  \"AcFreq\": %.3f,\r\n",        Buffer, Inverter.GetAcFrequency());
+    sprintf(Buffer, "%s  \"AcVoltage\": %.1f,\r\n",     Buffer, Inverter.GetAcVoltage());
+    sprintf(Buffer, "%s  \"AcPower\": %.1f,\r\n",       Buffer, Inverter.GetAcPower());
+    sprintf(Buffer, "%s  \"EnergyToday\": %.1f,\r\n",   Buffer, Inverter.GetEnergyToday());
+    sprintf(Buffer, "%s  \"EnergyTotal\": %.1f,\r\n",   Buffer, Inverter.GetEnergyTotal());
+    sprintf(Buffer, "%s  \"OperatingTime\": %u,\r\n",   Buffer, Inverter.GetOperatingTime());
+    sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",    Buffer, Inverter.GetInverterTemperature());
+    sprintf(Buffer, "%s  \"Cnt\": %u\r\n",              Buffer, u16PacketCnt);
+    sprintf(Buffer, "%s}\r\n", Buffer);
+  #else
+    #warning simulating
+    sprintf(Buffer, "{\r\n");
+    sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",    Buffer);
+    sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",       Buffer);
+    sprintf(Buffer, "%s  \"AcFreq\": 50.00,\r\n",         Buffer);
+    sprintf(Buffer, "%s  \"AcVoltage\": 230.0,\r\n",      Buffer);
+    sprintf(Buffer, "%s  \"AcPower\": 0.00,\r\n",         Buffer);
+    sprintf(Buffer, "%s  \"EnergyToday\": 0.3,\r\n",      Buffer);
+    sprintf(Buffer, "%s  \"EnergyTotal\": 49.1,\r\n",     Buffer);
+    sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n", Buffer);
+    sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
+    sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                Buffer, u16PacketCnt);
+    sprintf(Buffer, "%s}", Buffer);
   #endif 
 }
 
@@ -107,14 +97,12 @@ void MainPage(void)
 // -------------------------------------------------------
 void WiFi_Reconnect()
 {
-  //uint16_t cnt = 0;
-
   if( WiFi.status() != WL_CONNECTED )
   {
     digitalWrite(LED_GN, 0);
     
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
 
     while (WiFi.status() != WL_CONNECTED)
     {
@@ -130,12 +118,11 @@ void WiFi_Reconnect()
     Serial.print("Hostname: ");
     Serial.println(HOSTNAME);
 
-    MqttClient.setServer(mqtt_server, 1883);
+    MqttClient.setServer(MQTT_SERVER, MQTT_PORT);
     
     digitalWrite(LED_RT, 0);
   }
 }
-
 
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
@@ -151,7 +138,7 @@ void MqttReconnect()
     Serial.print("Attempting MQTT connection...");
     
     // Attempt to connect with last will
-    if (MqttClient.connect("Growatt", "LS111/Solar/Growatt1kWp", 1, 1, "{\"Status\": \"Disconnected\" }")) {
+    if (MqttClient.connect("Growatt", MQTT_USER, MQTT_PASS, "LS111/Solar/Growatt1kWp", 1, 1, "{\"Status\": \"Disconnected\" }")) {
       Serial.println("connected");
     } 
     else
@@ -184,7 +171,7 @@ void setup()
   WiFi_Reconnect();
   Inverter.begin(Serial);
 
-  httpUpdater.setup(&httpServer, update_path, update_username, update_password);
+  httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASS);
   httpServer.begin();
 }
 
@@ -220,27 +207,26 @@ void loop()
     if( MqttClient.connected() && (WiFi.status() == WL_CONNECTED) )
     {
       #ifndef SIMULATE
-      if( Inverter.UpdateData() ) // get new data from inverter
+        if( Inverter.UpdateData() ) // get new data from inverter
       #else
-      if(1)
+        if(1)
       #endif
-      {
-        u16PacketCnt++;
-        CreateJson(MqttPayload);
+        {
+          u16PacketCnt++;
+          CreateJson(MqttPayload);
         
-        MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
-    
-        digitalWrite(LED_BL, 0); // clear blue led if everything is ok
-      }
-      else
-      {
-        sprintf(MqttPayload, "{\"Status\": \"Disconnected\" }");
-        MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
-        digitalWrite(LED_BL, 1); // set blue led in case of error
-      }
+          MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
+
+          digitalWrite(LED_BL, 0); // clear blue led if everything is ok
+        }
+        else
+        {
+          sprintf(MqttPayload, "{\"Status\": \"Disconnected\" }");
+          MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
+          digitalWrite(LED_BL, 1); // set blue led in case of error
+        }
     }
 
     Timer10s = now;
   }
-
 }
